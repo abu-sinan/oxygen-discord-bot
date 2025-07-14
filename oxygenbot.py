@@ -1,6 +1,8 @@
 import discord
 import requests
 import json
+import asyncio
+import time
 
 # Load API keys from config.json
 with open('config.json', 'r') as f:
@@ -38,6 +40,9 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
+# Cooldown tracking dict: user_id -> last message timestamp
+user_cooldowns = {}
+
 @client.event
 async def on_ready():
     print(f'OxygenBot is online as {client.user}')
@@ -50,6 +55,16 @@ async def on_message(message):
     if client.user not in message.mentions:
         return
 
+    now = time.time()
+    cooldown = 10  # seconds cooldown per user
+    last_time = user_cooldowns.get(message.author.id, 0)
+
+    if now - last_time < cooldown:
+        await message.channel.send(f"Please wait a bit before asking again, {message.author.mention}.")
+        return
+
+    user_cooldowns[message.author.id] = now
+
     thinking_message = await message.channel.send("Let me think...")
 
     reply = ask_gemini(message.content)
@@ -60,7 +75,9 @@ async def on_message(message):
     max_length = 2000
     reply_chunks = [reply[i:i+max_length] for i in range(0, len(reply), max_length)]
 
-    for chunk in reply_chunks:
+    max_chunks = 5  # limit number of chunks sent to avoid spam
+
+    for chunk in reply_chunks[:max_chunks]:
         embed = discord.Embed(
             title="OxygenBot AI Response",
             description=chunk,
@@ -68,5 +85,9 @@ async def on_message(message):
         )
         embed.set_footer(text="Powered by Gemini 2.0 Flash")
         await message.channel.send(embed=embed)
+        await asyncio.sleep(1)  # pause 1 second between messages
+
+    if len(reply_chunks) > max_chunks:
+        await message.channel.send(f"...and more response not shown to avoid spam.")
 
 client.run(DISCORD_BOT_TOKEN)
