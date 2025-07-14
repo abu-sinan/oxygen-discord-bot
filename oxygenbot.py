@@ -9,7 +9,6 @@ with open('config.json', 'r') as f:
 GEMINI_API_KEY = config['GEMINI_API_KEY']
 DISCORD_BOT_TOKEN = config['DISCORD_BOT_TOKEN']
 
-# Gemini API interaction
 def ask_gemini(question):
     url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
     headers = {
@@ -22,20 +21,18 @@ def ask_gemini(question):
         ]
     }
 
-    for attempt in range(2):  # Retry once if needed
-        response = requests.post(url, headers=headers, json=body)
-        if response.status_code == 200:
-            data = response.json()
-            try:
-                return data['candidates'][0]['content']['parts'][0]['text']
-            except:
-                return "Sorry, Gemini couldn't generate a response."
-        elif response.status_code == 503:
-            continue  # Retry if service unavailable
+    response = requests.post(url, headers=headers, json=body)
 
-    return f"Gemini API error: {response.status_code}"
+    if response.status_code == 200:
+        data = response.json()
+        try:
+            return data['candidates'][0]['content']['parts'][0]['text']
+        except:
+            return "Sorry, Gemini couldn't generate a response."
+    else:
+        return f"Gemini API error: {response.status_code}"
 
-# Discord bot setup
+# Discord Bot Setup
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -48,9 +45,8 @@ async def on_ready():
 @client.event
 async def on_message(message):
     if message.author.bot:
-        return  # Ignore bot messages
+        return
 
-    # Respond only when mentioned
     if client.user not in message.mentions:
         return
 
@@ -60,13 +56,13 @@ async def on_message(message):
 
     await thinking_message.delete()
 
-    # Split reply into 2000-character chunks
+    # Split long replies into 2000-character chunks
     max_length = 2000
     reply_chunks = [reply[i:i+max_length] for i in range(0, len(reply), max_length)]
 
     for chunk in reply_chunks:
         embed = discord.Embed(
-            title="Response",
+            title="OxygenBot AI Response",
             description=chunk,
             color=0x3498DB
         )
