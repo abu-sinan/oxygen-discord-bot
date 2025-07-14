@@ -86,4 +86,4 @@ Slash command integration.
 
 ## 📃 License
 
-MIT License
+MIT [License](https://github.com/abu-sinan/oxygenbot/blob/main/LICENSE)
