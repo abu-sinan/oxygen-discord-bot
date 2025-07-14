@@ -1,4 +1,5 @@
-# OxygenBot
+![Oxygen Bot](https://github.com/abu-sinan/oxygenbot/blob/main/assets/discord_bot.png)
+# 🤖 OxygenBot
 
 OxygenBot is a lightweight Discord chatbot powered by Google Gemini 2.0 Flash API. It responds to messages where it's mentioned, providing AI-generated answers directly in Discord.
 
