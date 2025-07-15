@@ -1,93 +1,80 @@
 import discord
+import os
 import requests
 import json
 import asyncio
-import time
+from dotenv import load_dotenv
+import logging
 
-# Load API keys from config.json
-with open('config.json', 'r') as f:
-    config = json.load(f)
+logging.basicConfig(level=logging.ERROR)
 
-GEMINI_API_KEY = config['GEMINI_API_KEY']
-DISCORD_BOT_TOKEN = config['DISCORD_BOT_TOKEN']
+# Load API keys from .env file
+load_dotenv()
+DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
-def ask_gemini(question):
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-    headers = {
-        'Content-Type': 'application/json',
-        'X-goog-api-key': GEMINI_API_KEY
-    }
-    body = {
-        "contents": [
-            {"parts": [{"text": question}]}
-        ]
-    }
+# Gemini API endpoint
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
-    response = requests.post(url, headers=headers, json=body)
-
-    if response.status_code == 200:
-        data = response.json()
-        try:
-            return data['candidates'][0]['content']['parts'][0]['text']
-        except:
-            return "Sorry, Gemini couldn't generate a response."
-    else:
-        return f"Gemini API error: {response.status_code}"
-
-# Discord Bot Setup
+# Discord bot setup
 intents = discord.Intents.default()
+intents.messages = True
 intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-# Cooldown tracking dict: user_id -> last message timestamp
-user_cooldowns = {}
+MAX_EMBED_LENGTH = 4000  # Keep safely under Discord's 6000 limit
+
+def ask_gemini(prompt):
+    headers = {
+        "Content-Type": "application/json",
+        "X-goog-api-key": GEMINI_API_KEY
+    }
+    body = {
+        "contents": [{"parts": [{"text": prompt}]}]
+    }
+    try:
+        response = requests.post(GEMINI_URL, headers=headers, data=json.dumps(body))
+        if response.status_code == 200:
+            data = response.json()
+            return data['candidates'][0]['content']['parts'][0]['text']
+        else:
+            logging.error(f"API Error {response.status_code}: {response.text}")
+            return None
+    except Exception as e:
+        logging.error(f"Exception calling Gemini API: {e}")
+        return None
 
 @client.event
 async def on_ready():
-    print(f'OxygenBot is online as {client.user}')
+    print(f'✅ Oxygen is online as {client.user}')
 
 @client.event
 async def on_message(message):
     if message.author.bot:
         return
 
-    if client.user not in message.mentions:
-        return
+    if client.user in message.mentions:
+        prompt = message.content.replace(f'<@{client.user.id}>', '').strip()
 
-    now = time.time()
-    cooldown = 10  # seconds cooldown per user
-    last_time = user_cooldowns.get(message.author.id, 0)
+        if prompt == "":
+            await message.channel.send("❓ Mention me with a question!")
+            return
 
-    if now - last_time < cooldown:
-        await message.channel.send(f"Please wait a bit before asking again, {message.author.mention}.")
-        return
+        async with message.channel.typing():
+            reply = await asyncio.to_thread(ask_gemini, prompt)
 
-    user_cooldowns[message.author.id] = now
+        if reply:
+            if len(reply) > MAX_EMBED_LENGTH:
+                reply = reply[:MAX_EMBED_LENGTH] + "\n\n*Reply truncated due to Discord limits.*"
 
-    thinking_message = await message.channel.send("Let me think...")
+            embed = discord.Embed(
+                description=reply,
+                color=discord.Color.teal()
+            )
+            embed.set_footer(text="Powered by Oxygen AI")
+            await message.reply(embed=embed)
+        else:
+            await message.reply("⚠️ API Error: Could not get a reply.")
 
-    reply = ask_gemini(message.content)
-
-    await thinking_message.delete()
-
-    # Split long replies into 2000-character chunks
-    max_length = 2000
-    reply_chunks = [reply[i:i+max_length] for i in range(0, len(reply), max_length)]
-
-    max_chunks = 5  # limit number of chunks sent to avoid spam
-
-    for chunk in reply_chunks[:max_chunks]:
-        embed = discord.Embed(
-            title="OxygenBot AI Response",
-            description=chunk,
-            color=0x3498DB
-        )
-        embed.set_footer(text="Powered by Gemini 2.0 Flash")
-        await message.channel.send(embed=embed)
-        await asyncio.sleep(1)  # pause 1 second between messages
-
-    if len(reply_chunks) > max_chunks:
-        await message.channel.send(f"...and more response not shown to avoid spam.")
-
-client.run(DISCORD_BOT_TOKEN)
+client.run(DISCORD_TOKEN)
