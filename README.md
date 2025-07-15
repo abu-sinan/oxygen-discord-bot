@@ -1,89 +1,111 @@
-![Oxygen Bot](https://github.com/abu-sinan/oxygenbot/blob/main/assets/discord_bot.png)
-# 🤖 OxygenBot
+![Oxygen Discord Bot](https://github.com/abu-sinan/oxygen-discord-bot/blob/main/assets/discord_bot.png)
+# 🫧 Oxygen - Discord AI Bot (Gemini API)
 
-OxygenBot is a lightweight Discord chatbot powered by Google Gemini 2.0 Flash API. It responds to messages where it's mentioned, providing AI-generated answers directly in Discord.
-
----
-
-## 🎯 Features
-
-- 💬 Replies only when mentioned (e.g., `@OxygenBot Who are you?`).
-- 📖 Long responses are automatically split across multiple messages.
-- 📊 Uses clean Discord embeds for professional replies.
-- 🔐 API keys secured via external config file.
+Oxygen is a lightweight Discord bot powered by Google's Gemini AI. It listens for mentions in messages, forwards your question to Gemini, and replies with an AI-generated response inside a clean embed.
 
 ---
 
-## 🚀 Setup Instructions
+## ✨ Features
 
-### 1️⃣ Clone the Repository
+- Uses **Google Gemini 2.0 Flash** model.
+
+- Replies only when mentioned (no spam).
+
+- Shows Discord’s native **typing indicator** while thinking.
+
+- Answers are returned inside a **styled embed**.
+
+- Automatically trims long replies to fit Discord’s limits.
+
+---
+
+## 📦 Requirements
+
+- Python 3.9+
+
+- `discord.py`
+
+- `requests`
+
+- `python-dotenv`
+
+---
+
+## ⚙️ Installation
+
+### 1. Clone the project:
 
 ```bash
-git clone https://github.com/abu-sinan/oxygenbot.git
-cd oxygenbot
+git clone https://github.com/abu-sinan/oxygen-discord-bot.git
+cd oxygen-discord-bot
 ```
 
-### 2️⃣ Install Dependencies
+### 2. Install dependencies:
 
 ```bash
-pip install discord.py requests
+pip install -r requirements.txt
 ```
 
-### 3️⃣ Create config.json
+### 3. Set up .env file:
 
-In the project folder, create a file named `config.json`:
+Create a `.env` file in the project directory:
 
-```json
-{
-    "GEMINI_API_KEY": "YOUR_GEMINI_API_KEY",
-    "DISCORD_BOT_TOKEN": "YOUR_DISCORD_BOT_TOKEN"
-}
+```.env
+DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 ```
 
-### 4️⃣ Run OxygenBot
+### 4. Run the bot:
 
 ```bash
-python oxygenbot.py
+python bot.py
 ```
 
-OxygenBot will display a message in the terminal when it’s online.
+---
+
+## 📋 Usage
+
+- Mention Oxygen in any channel it has access to, followed by your question:
+
+
+`@Oxygen How does AI work?`
+
+- Oxygen will reply using the Gemini API.
 
 ---
 
-## ⚠️ Security Notes
+## 🛠️ Configuration
 
-Never share your real API keys publicly.
-
-Ensure `config.json` is listed in your `.gitignore` to prevent uploading sensitive data.
+`MAX_EMBED_LENGTH` inside `bot.py` limits message size to avoid Discord embed errors. Default: 4000 characters.
 
 ---
 
-## 📄 Example Usage
+## 📑 Example Reply
 
-In Discord:
+> @Oxygen What is AI?
 
-`@OxygenBot How does AI work?`
 
-OxygenBot:
 
-Shows "Let me think..."
+Oxygen replies with an embed:
 
-Replies with AI-generated answer using Gemini 2.0 Flash.
+```
+Artificial intelligence (AI) is the simulation of human intelligence processes by machines...
+```
 
 ---
 
-## 🛠️ Planned Features
+## 🤖 Tech Stack
 
-Optional response logging.
+- Python
 
-Web dashboard.
+- discord.py
 
-Multi-channel support.
+- Google Generative Language API (Gemini)
 
-Slash command integration.
+- dotenv
 
 ---
 
 ## 📃 License
 
-MIT [License](https://github.com/abu-sinan/oxygenbot/blob/main/LICENSE)
+MIT [License](https://github.com/abu-sinan/oxygen-discord-bot/blob/main/LICENSE)
